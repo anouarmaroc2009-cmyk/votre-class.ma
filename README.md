@@ -1,0 +1,1 @@
+# votre-class.ma
