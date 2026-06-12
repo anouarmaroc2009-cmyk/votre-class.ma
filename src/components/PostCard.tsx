@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Pin, Paperclip, Heart, MessageCircle } from 'lucide-react';
 import CommentSection from './CommentSection';
+import RelativeTime from './RelativeTime';
 import type { Post } from '@/lib/types';
 
 interface PostCardProps {
@@ -29,26 +30,6 @@ const avatarColors: Record<string, string> = {
 
 function getAvatarColor(name: string): string {
   return avatarColors[name] || 'from-gray-400 to-gray-500';
-}
-
-function formatTimestamp(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays === 1) return 'Yesterday';
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
 }
 
 function getTypeBadge(type: string): { label: string; color: string } | null {
@@ -104,7 +85,7 @@ export default function PostCard({ post, index, onAddComment }: PostCardProps) {
               )}
             </div>
             <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-xs text-gray-500">{formatTimestamp(post.createdAt)}</span>
+              <span className="text-xs text-gray-500"><RelativeTime date={post.createdAt} /></span>
               {badge && (
                 <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${badge.color}`}>
                   {badge.label}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, Clock, ChevronRight } from 'lucide-react';
 
@@ -16,26 +16,29 @@ interface UpcomingWidgetProps {
   items: UpcomingItem[];
 }
 
-function formatDueDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffMs = date.getTime() - now.getTime();
-  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+function DueDateBadge({ dueDate }: { dueDate: string }) {
+  const [label, setLabel] = useState('');
+  const [color, setColor] = useState('');
 
-  if (diffDays < 0) return 'Overdue';
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Tomorrow';
-  if (diffDays <= 7) return `In ${diffDays} days`;
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
+  useEffect(() => {
+    const date = new Date(dueDate);
+    const now = new Date();
+    const diffMs = date.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
-function getDueDateColor(dateStr: string): string {
-  const diffDays = Math.ceil(
-    (new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+    if (diffDays < 0) { setLabel('Overdue'); setColor('text-red-600 bg-red-50'); }
+    else if (diffDays === 0) { setLabel('Today'); setColor('text-amber-600 bg-amber-50'); }
+    else if (diffDays === 1) { setLabel('Tomorrow'); setColor('text-amber-600 bg-amber-50'); }
+    else if (diffDays <= 7) { setLabel(`In ${diffDays} days`); setColor('text-gray-500 bg-gray-50'); }
+    else { setLabel(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })); setColor('text-gray-500 bg-gray-50'); }
+  }, [dueDate]);
+
+  return (
+    <span className={`text-[11px] font-medium px-1.5 py-0.5 rounded ${color}`}>
+      <Clock className="w-3 h-3 inline mr-0.5 -mt-0.5" />
+      {label}
+    </span>
   );
-  if (diffDays < 0) return 'text-red-600 bg-red-50';
-  if (diffDays <= 1) return 'text-amber-600 bg-amber-50';
-  return 'text-gray-500 bg-gray-50';
 }
 
 export default function UpcomingWidget({ items }: UpcomingWidgetProps) {
@@ -57,7 +60,6 @@ export default function UpcomingWidget({ items }: UpcomingWidgetProps) {
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      {/* Header */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
         className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors"
@@ -91,8 +93,6 @@ export default function UpcomingWidget({ items }: UpcomingWidgetProps) {
               <AnimatePresence mode="popLayout">
                 {sorted.map((item, i) => {
                   const isDone = completedIds.has(item.id);
-                  const dueLabel = formatDueDate(item.dueDate);
-                  const dueColor = getDueDateColor(item.dueDate);
 
                   return (
                     <motion.div
@@ -112,7 +112,6 @@ export default function UpcomingWidget({ items }: UpcomingWidgetProps) {
                       }`}
                       onClick={() => toggleComplete(item.id)}
                     >
-                      {/* Checkbox */}
                       <div className="mt-0.5 flex-shrink-0">
                         <motion.div
                           animate={isDone ? { scale: [1, 1.2, 1] } : { scale: 1 }}
@@ -147,7 +146,6 @@ export default function UpcomingWidget({ items }: UpcomingWidgetProps) {
                         </motion.div>
                       </div>
 
-                      {/* Content */}
                       <div className="flex-1 min-w-0">
                         <p
                           className={`text-sm font-medium truncate transition-colors ${
@@ -160,10 +158,7 @@ export default function UpcomingWidget({ items }: UpcomingWidgetProps) {
                           {item.courseName}
                         </p>
                         <div className="flex items-center gap-2 mt-1.5">
-                          <span className={`text-[11px] font-medium px-1.5 py-0.5 rounded ${dueColor}`}>
-                            <Clock className="w-3 h-3 inline mr-0.5 -mt-0.5" />
-                            {dueLabel}
-                          </span>
+                          <DueDateBadge dueDate={item.dueDate} />
                           <span className="text-[11px] text-gray-400 font-medium">
                             {item.points} pts
                           </span>
