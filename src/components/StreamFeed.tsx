@@ -1,62 +1,32 @@
 'use client';
 
-import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PostCard from './PostCard';
 import type { Post } from '@/lib/types';
 
 interface StreamFeedProps {
   posts: Post[];
+  onAddComment: (postId: string, content: string) => void;
 }
 
-export default function StreamFeed({ posts }: StreamFeedProps) {
-  const [localPosts, setLocalPosts] = useState(posts);
-
-  const handleAddComment = useCallback((postId: string, content: string) => {
-    setLocalPosts((prev) =>
-      prev.map((post) => {
-        if (post.id !== postId) return post;
-        return {
-          ...post,
-          comments: [
-            ...post.comments,
-            {
-              id: `c${Date.now()}`,
-              content,
-              author: { id: 'me', name: 'You', image: '' },
-              createdAt: new Date().toISOString(),
-            },
-          ],
-        };
-      })
-    );
-  }, []);
-
-  // Group pinned posts first, then sort by date
-  const sorted = [...localPosts].sort((a, b) => {
-    if (a.pinned && !b.pinned) return -1;
-    if (!a.pinned && b.pinned) return 1;
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-  });
-
+export default function StreamFeed({ posts, onAddComment }: StreamFeedProps) {
   return (
     <div className="space-y-4">
       <AnimatePresence mode="popLayout">
-        {sorted.map((post, i) => (
+        {posts.map((post, i) => (
           <PostCard
             key={post.id}
             post={post}
             index={i}
-            onAddComment={handleAddComment}
+            onAddComment={onAddComment}
           />
         ))}
       </AnimatePresence>
 
-      {sorted.length === 0 && (
+      {posts.length === 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
           className="text-center py-16"
         >
           <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
@@ -66,7 +36,7 @@ export default function StreamFeed({ posts }: StreamFeedProps) {
           </div>
           <h3 className="text-lg font-semibold text-gray-900">No posts yet</h3>
           <p className="text-sm text-gray-500 mt-1">
-            Be the first to post an announcement!
+            No announcements yet. Check back later!
           </p>
         </motion.div>
       )}

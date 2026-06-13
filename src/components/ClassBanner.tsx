@@ -7,9 +7,10 @@ interface ClassBannerProps {
   name: string;
   section: string;
   teacher: string;
+  coverColor?: string;
 }
 
-export default function ClassBanner({ name, section, teacher }: ClassBannerProps) {
+export default function ClassBanner({ name, section, teacher, coverColor }: ClassBannerProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: -12 }}
@@ -24,7 +25,7 @@ export default function ClassBanner({ name, section, teacher }: ClassBannerProps
         className="relative h-48 md:h-56 rounded-2xl overflow-hidden cursor-pointer shadow-sm"
       >
         {/* Gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500" />
+        <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${coverColor || '#4F46E5'} 0%, #7C3AED 100%)` }} />
 
         {/* Decorative orbs — subtle floating elements */}
         <motion.div
