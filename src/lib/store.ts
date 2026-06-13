@@ -156,3 +156,19 @@ export function getClassByCode(code: string): ClassData | undefined {
 export function isEnrolled(userId: string, classId: string): boolean {
   return get().enrollments.some((e) => e.userId === userId && e.classId === classId);
 }
+
+export function findUserByEmailExact(email: string): User | undefined {
+  return get().users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+}
+
+export function addStudentToClass(email: string, classId: string): { success: boolean; error?: string } {
+  const data = get();
+  const user = data.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+  if (!user) return { success: false, error: 'No user found with that email. They need to sign in first.' };
+  if (user.role === 'teacher') return { success: false, error: 'Cannot add a teacher as a student.' };
+  const already = data.enrollments.some((e) => e.userId === user.id && e.classId === classId);
+  if (already) return { success: false, error: 'Already enrolled.' };
+  data.enrollments.push({ userId: user.id, classId, role: 'student' });
+  save(data);
+  return { success: true };
+}
