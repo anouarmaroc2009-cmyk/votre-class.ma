@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import NavigationHeader from '@/components/NavigationHeader';
 import ClassBanner from '@/components/ClassBanner';
 import StreamFeed from '@/components/StreamFeed';
 import NewPostForm from '@/components/NewPostForm';
 import UpcomingWidget from '@/components/UpcomingWidget';
+import TimetableWidget from '@/components/TimetableWidget';
 import { useAuth } from '@/lib/auth-context';
 import { getClass, getClassPosts, createPost, addComment, listUserClasses, findUserById } from '@/lib/store';
 import type { Post as PostType } from '@/lib/types';
@@ -19,6 +19,7 @@ export default function ClassPage() {
   const [cls, setCls] = useState(getClass(id));
   const [posts, setPosts] = useState<PostType[]>([]);
   const [myRole, setMyRole] = useState<string>('student');
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (!isLoading && !user) { router.replace('/login'); return; }
@@ -33,19 +34,19 @@ export default function ClassPage() {
   useEffect(() => {
     setCls(getClass(id));
     setPosts(getClassPosts(id));
-  }, [id]);
+  }, [id, refreshKey]);
 
   const handleNewPost = (content: string) => {
     if (!user) return;
-    const post = createPost(content, user.id, id);
-    setPosts(getClassPosts(id));
+    createPost(content, user.id, id);
+    setRefreshKey((k) => k + 1);
   };
 
   const handleAddComment = useCallback((postId: string, content: string) => {
     if (!user) return;
     addComment(postId, content, user.id);
-    setPosts(getClassPosts(id));
-  }, [user, id]);
+    setRefreshKey((k) => k + 1);
+  }, [user]);
 
   if (isLoading || !user || !cls) return null;
 
@@ -72,8 +73,9 @@ export default function ClassPage() {
             />
           </div>
 
-          <aside className="w-full lg:w-80 flex-shrink-0">
+          <aside className="w-full lg:w-80 flex-shrink-0 space-y-6">
             <div className="lg:sticky lg:top-24 space-y-6">
+              <TimetableWidget userId={user.id} />
               <UpcomingWidget items={[]} />
             </div>
           </aside>

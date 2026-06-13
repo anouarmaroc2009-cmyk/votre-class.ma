@@ -1,13 +1,12 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
 import type { User, Role } from './types';
-import { findUserByEmail, createUser } from './store';
+import { findUserByEmail, createUser, mapParentToStudent, findUserById } from './store';
 
 interface AuthContextValue {
   user: User | null;
-  login: (email: string, name: string) => void;
+  login: (email: string, name: string, role: Role, childEmail?: string) => void;
   logout: () => void;
   isLoading: boolean;
 }
@@ -26,18 +25,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const raw = localStorage.getItem('flowclass_session');
     if (raw) {
-      try {
-        const u = JSON.parse(raw) as User;
-        setUser(u);
-      } catch { /* ignore */ }
+      try { setUser(JSON.parse(raw) as User); } catch { /* ignore */ }
     }
     setIsLoading(false);
   }, []);
 
-  const login = useCallback((email: string, name: string) => {
+  const login = useCallback((email: string, name: string, role: Role, childEmail?: string) => {
     let u = findUserByEmail(email);
-    const role: Role = email.includes('teacher') ? 'teacher' : 'student';
     if (!u) u = createUser(email, name, role);
+    // If parent and child email provided, create mapping
+    if (role === 'parent' && childEmail) {
+      const child = findUserByEmail(childEmail);
+      if (child) mapParentToStudent(u.id, child.id);
+    }
     setUser(u);
     localStorage.setItem('flowclass_session', JSON.stringify(u));
   }, []);
@@ -54,6 +54,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useAuth() {
-  return useContext(AuthContext);
-}
+export function useAuth() { return useContext(AuthContext); }
